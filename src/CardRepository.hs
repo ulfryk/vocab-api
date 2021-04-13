@@ -3,11 +3,52 @@
 module CardRepository where
 
 import CardDTO
+import qualified Data.List as Lst (find)
 import Data.Text (Text, pack)
-import Database.MongoDB (Action, Document, Label, ObjectId, Value, access, close, connect, find, host, insert, master, rest, select, typed, valueAt, (=:))
+import Data.Time.Clock (UTCTime)
+import Database.MongoDB
+  ( Action,
+    Document,
+    Field,
+    Label,
+    ObjectId,
+    Value (Null),
+    access,
+    cast,
+    close,
+    connect,
+    find,
+    host,
+    insert,
+    label,
+    look,
+    master,
+    rest,
+    select,
+    timestamp,
+    typed,
+    value,
+    valueAt,
+    (=:),
+  )
 
 getString :: Label -> Document -> Text
-getString label = pack . typed . valueAt label
+getString l = pack . typed . valueAt l
+
+maybeNotNull :: Field -> Maybe Field
+maybeNotNull f =
+  case value f of
+    Null -> Nothing
+    _ -> Just f
+
+getStringMaybe :: Label -> Document -> Maybe Text
+getStringMaybe k doc = do
+  fld <- Lst.find ((k ==) . label) doc
+  notNullFld <- maybeNotNull fld
+  return $ (pack . cast . value) notNullFld
+
+getBool :: Label -> Document -> Bool
+getBool l = typed . valueAt l
 
 getObjId :: Document -> ObjectId
 getObjId = typed . valueAt "_id"
@@ -16,13 +57,33 @@ asDocument :: Card -> Document
 asDocument card = ["aSide" =: aSide card, "bSide" =: bSide card]
 
 inputAsDocument :: CardInput -> Document
-inputAsDocument card = ["aSide" =: initASide card, "bSide" =: initBSide card]
+inputAsDocument card =
+  [ "aSide" =: initASide card,
+    "aSideDetails" =: initASideDetails card,
+    "bSide" =: initBSide card,
+    "suspended" =: False,
+    "archived" =: False
+  ]
+
+getCreatedTime :: Document -> UTCTime
+getCreatedTime = timestamp . getObjId
+
+getUpdatedTime :: Label -> Document -> UTCTime
+getUpdatedTime l doc =
+  case look l doc of
+    Just v -> typed v
+    Nothing -> getCreatedTime doc
 
 fromDocument :: Document -> Card
 fromDocument doc =
   Card
     { aSide = getString "aSide" doc,
+      aSideDetails = getStringMaybe "aSideDetails" doc,
       bSide = getString "bSide" doc,
+      createdAt = getCreatedTime doc,
+      updatedAt = getUpdatedTime "updatedAt" doc,
+      suspended = getBool "suspended" doc,
+      archived = getBool "archived" doc,
       _id = pack . show $ getObjId doc
     }
 
@@ -38,7 +99,17 @@ allCards = rest =<< find (select [] "cards")
 createCard :: CardInput -> IO Card
 createCard input = do
   ident <- processRequest $ addCard input
-  return Card {aSide = initASide input, bSide = initBSide input, _id = toId ident}
+  return
+    Card
+      { aSide = initASide input,
+        aSideDetails = initASideDetails input,
+        bSide = initBSide input,
+        createdAt = timestamp $ typed ident,
+        updatedAt = timestamp $ typed ident,
+        suspended = False,
+        archived = False,
+        _id = toId ident
+      }
 
 getAllCards :: IO [Card]
 getAllCards = do

@@ -26,6 +26,7 @@ dependencies:
   - aeson
   - Spock >=0.14
   - text
+  - time
 
 library:
   source-dirs: src
