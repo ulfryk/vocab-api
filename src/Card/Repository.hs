@@ -7,7 +7,7 @@ import qualified Card.Dto.CardInput as Inp
 import qualified Card.Dto.CardUpdate as Upd
 import Data.Foldable (forM_)
 import qualified Data.List as Lst (find)
-import Data.Maybe (fromJust)
+import Data.Either.Combinators (rightToMaybe)
 import Data.Text (Text, pack, unpack)
 import Data.Time.Clock (UTCTime)
 import Database.MongoDB
@@ -37,9 +37,8 @@ import Database.MongoDB
     value,
     valueAt,
     (=:),
-    (=?),
-  )
-import Debug.Trace (trace)
+    (=?), Select,  )
+import Text.Read (readEither)
 
 getString :: Label -> Document -> Text
 getString l = pack . typed . valueAt l
@@ -121,18 +120,34 @@ addCard card = insert "cards" $ inputAsDocument card
 allCards :: Action IO [Document]
 allCards = rest =<< find (select [] "cards")
 
-upsertCard :: Text -> Document -> Action IO (Maybe Document)
-upsertCard cid patch = do
-  let theId = ObjId . read . unpack $ cid
-  rec <- findOne $ select ["_id" =: theId] "cards"
-  let maybeUpdated = fmap (merge patch) rec
-  forM_ maybeUpdated (upsert (select ["_id" =: theId] "cards"))
-  return maybeUpdated
+parseId :: Text -> Maybe Value
+parseId = rightToMaybe . fmap ObjId . readEither . unpack
+
+byIdQuery :: Select aQueryOrSelection => Value -> aQueryOrSelection
+byIdQuery cid = select ["_id" =: cid] "cards"
+
+patchCard :: Text -> Document -> Action IO (Maybe Document)
+patchCard cid patch =
+  case parseId cid of
+    Just theId -> do
+      rec <- findOne $ byIdQuery theId
+      let maybeUpdated = fmap (merge patch) rec
+      forM_ maybeUpdated $ upsert $ byIdQuery theId
+      return maybeUpdated
+    _ -> return Nothing
 
 updateCard :: Text -> Upd.CardUpdate -> IO (Maybe Card)
 updateCard cid upd = do
-  updated <- processRequest . upsertCard cid . updateAsDocument $ upd
+  updated <- processRequest . patchCard cid . updateAsDocument $ upd
   return $ fmap fromDocument updated
+
+getOneCard :: Text -> IO (Maybe Card)
+getOneCard cid =
+  case parseId cid of
+    Just theId -> do
+      card <- processRequest . findOne $ byIdQuery theId
+      return $ fmap fromDocument card
+    _ -> return Nothing
 
 createCard :: Inp.CardInput -> IO Card
 createCard input = do

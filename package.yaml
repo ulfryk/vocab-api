@@ -28,6 +28,7 @@ dependencies:
   - text
   - time
   - http-types
+  - either
 
 library:
   source-dirs: src

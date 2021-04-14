@@ -22,6 +22,10 @@ const getAll = () => fetch(cardsPath)
     .then(logResponse)
     .catch(logError);
 
+const getOne = id => fetch(`${cardsPath}/${id}`)
+    .then(logResponse)
+    .catch(logError);
+
 const create = input => fetch(cardsPath, {method: 'POST', body: JSON.stringify(input)})
     .then(logResponse)
     .catch(logError);

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: df7f195d1235870ba0378e3b557f0311870f91dc8908ff211055441b74b51d41
+-- hash: a116f357325728d314e00c8c5922d25dee9b0a847ec285630015cee6e358fae9
 
 name:           vocab-api
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      ApiError
       Card.Api
       Card.Dto.Card
       Card.Dto.CardInput
@@ -40,6 +41,7 @@ library
       Spock >=0.14
     , aeson
     , base >=4.7 && <5
+    , either
     , http-types
     , mongoDB
     , mtl
@@ -58,6 +60,7 @@ executable vocab-api-exe
       Spock >=0.14
     , aeson
     , base >=4.7 && <5
+    , either
     , http-types
     , mongoDB
     , mtl
@@ -78,6 +81,7 @@ test-suite vocab-api-test
       Spock >=0.14
     , aeson
     , base >=4.7 && <5
+    , either
     , http-types
     , mongoDB
     , mtl
