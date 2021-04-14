@@ -9,7 +9,7 @@ import ApiError (ApiError, apiErr)
 import Control.Monad.Trans (liftIO)
 import Data.Text (Text)
 import Network.HTTP.Types.Status (notFound404)
-import Web.Spock (SpockAction, SpockM, get, json, jsonBody', patch, post, root, setStatus, text, var, (<//>))
+import Web.Spock (SpockAction, SpockM, get, json, jsonBody', patch, post, root, setStatus, text, var, (<//>), getContext, setHeader, prehook, WebStateM, ActionCtxT)
 import Data.Aeson (ToJSON)
 
 type Api = SpockM () () () ()
@@ -27,8 +27,15 @@ returnOr404 cid card =
       setStatus notFound404
       json $ cardNotFound cid
 
+corsHeader :: ActionCtxT b (WebStateM () () ()) b
+corsHeader =
+  do ctx <- getContext
+     setHeader "Access-Control-Allow-Origin" "*"
+     pure ctx
+
 app :: Api
 app =
+  prehook corsHeader $
   do
     get root $ text "Cards can be found under '/cards' path"
 
