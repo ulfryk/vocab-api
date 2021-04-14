@@ -7,7 +7,8 @@ import Card.Dto.CardUpdate (CardUpdate)
 import Card.Repository
 import Control.Monad.Trans (liftIO)
 import Data.Text (pack)
-import Web.Spock (SpockAction, SpockM, get, json, jsonBody', var, post, patch, root, text, (<//>))
+import Web.Spock (SpockAction, SpockM, get, json, jsonBody', var, post, patch, root, text, (<//>), setStatus)
+import Network.HTTP.Types.Status (notFound404)
 
 type Api = SpockM () () () ()
 
@@ -30,4 +31,10 @@ app =
     patch ("cards" <//> var) $ \cid ->
       do
         p <- jsonBody' :: ApiAction CardUpdate
-        text . pack $ show p <> " by id " <> cid
+        card <- liftIO $ updateCard cid p
+        case card of
+          Just c -> json c
+          Nothing -> do
+            setStatus notFound404
+            text ("{\"error\": \"No Card with \'" <> cid <> "' id.\" }")
+

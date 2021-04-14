@@ -9,7 +9,7 @@ import GHC.Generics (Generic)
 data CardUpdate = CardUpdate
   { aSide :: Maybe Text,
     aSideDetails :: Maybe Text,
-    setBSide :: Maybe Text,
+    bSide :: Maybe Text,
     archived :: Maybe Bool,
     suspended :: Maybe Bool
   }

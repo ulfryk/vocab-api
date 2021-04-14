@@ -27,6 +27,7 @@ dependencies:
   - Spock >=0.14
   - text
   - time
+  - http-types
 
 library:
   source-dirs: src

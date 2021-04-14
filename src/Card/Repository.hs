@@ -4,8 +4,11 @@ module Card.Repository where
 
 import Card.Dto.Card
 import qualified Card.Dto.CardInput as Inp
+import qualified Card.Dto.CardUpdate as Upd
+import Data.Foldable (forM_)
 import qualified Data.List as Lst (find)
-import Data.Text (Text, pack)
+import Data.Maybe (fromJust)
+import Data.Text (Text, pack, unpack)
 import Data.Time.Clock (UTCTime)
 import Database.MongoDB
   ( Action,
@@ -13,25 +16,30 @@ import Database.MongoDB
     Field,
     Label,
     ObjectId,
-    Value (Null),
+    Value (Null, ObjId),
     access,
     cast,
     close,
     connect,
     find,
+    findOne,
     host,
     insert,
     label,
     look,
     master,
+    merge,
     rest,
     select,
     timestamp,
     typed,
+    upsert,
     value,
     valueAt,
     (=:),
+    (=?),
   )
+import Debug.Trace (trace)
 
 getString :: Label -> Document -> Text
 getString l = pack . typed . valueAt l
@@ -42,6 +50,7 @@ maybeNotNull f =
     Null -> Nothing
     _ -> Just f
 
+-- TODO: returns only first letter ( FIXME )
 getStringMaybe :: Label -> Document -> Maybe Text
 getStringMaybe k doc = do
   fld <- Lst.find ((k ==) . label) doc
@@ -65,6 +74,21 @@ inputAsDocument card =
     "suspended" =: False,
     "archived" =: False
   ]
+
+isFieldNotEmpty :: Field -> Bool
+isFieldNotEmpty fld =
+  case value fld of
+    Null -> False
+    _ -> True
+
+updateAsDocument :: Upd.CardUpdate -> Document
+updateAsDocument card =
+  filter isFieldNotEmpty $
+    ("aSide" =? Upd.aSide card)
+      <> ("aSideDetails" =? Upd.aSideDetails card)
+      <> ("bSide" =? Upd.bSide card)
+      <> ("suspended" =? Upd.suspended card)
+      <> ("archived" =? Upd.archived card)
 
 getCreatedTime :: Document -> UTCTime
 getCreatedTime = timestamp . getObjId
@@ -96,6 +120,19 @@ addCard card = insert "cards" $ inputAsDocument card
 
 allCards :: Action IO [Document]
 allCards = rest =<< find (select [] "cards")
+
+upsertCard :: Text -> Document -> Action IO (Maybe Document)
+upsertCard cid patch = do
+  let theId = ObjId . read . unpack $ cid
+  rec <- findOne $ select ["_id" =: theId] "cards"
+  let maybeUpdated = fmap (merge patch) rec
+  forM_ maybeUpdated (upsert (select ["_id" =: theId] "cards"))
+  return maybeUpdated
+
+updateCard :: Text -> Upd.CardUpdate -> IO (Maybe Card)
+updateCard cid upd = do
+  updated <- processRequest . upsertCard cid . updateAsDocument $ upd
+  return $ fmap fromDocument updated
 
 createCard :: Inp.CardInput -> IO Card
 createCard input = do
