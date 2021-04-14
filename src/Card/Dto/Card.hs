@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 
-module CardDTO where
+module Card.Dto.Card where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
@@ -22,12 +22,3 @@ data Card = Card
 instance ToJSON Card
 
 instance FromJSON Card
-
-data CardInput = CardInput
-  { initASide :: Text,
-    initASideDetails :: Maybe Text,
-    initBSide :: Text
-  }
-  deriving (Generic, Show)
-
-instance FromJSON CardInput

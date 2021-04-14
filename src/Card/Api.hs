@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CardsApi (app, Api, ApiAction, Card) where
+module Card.Api where
 
-import CardDTO
-import CardRepository
+import Card.Dto.CardInput
+import Card.Repository
 import Control.Monad.Trans (liftIO)
 import Web.Spock (SpockAction, SpockM, get, json, jsonBody', post, root, text)
 import Web.Spock.Config ()

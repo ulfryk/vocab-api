@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8ce157f86568558296af7a3a2232530f63967a9516c2d9bd94a5fe8d586cc38c
+-- hash: 9ed7b38e7f7e98a6f21f88247560c044bc30d2144f6eb978a04d4f6e55fe9e06
 
 name:           vocab-api
 version:        0.1.0.0
@@ -27,9 +27,11 @@ source-repository head
 
 library
   exposed-modules:
-      CardDTO
-      CardRepository
-      CardsApi
+      Card.Api
+      Card.Dto.Card
+      Card.Dto.CardInput
+      Card.Dto.CardUpdate
+      Card.Repository
   other-modules:
       Paths_vocab_api
   hs-source-dirs:

@@ -2,7 +2,7 @@
 
 module Main where
 
-import CardsApi
+import Card.Api
 import Web.Spock (runSpock, spock)
 import Web.Spock.Config (PoolOrConn (PCNoDatabase), defaultSpockCfg)
 

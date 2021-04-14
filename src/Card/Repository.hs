@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CardRepository where
+module Card.Repository where
 
-import CardDTO
+import Card.Dto.Card
+import Card.Dto.CardInput
 import qualified Data.List as Lst (find)
 import Data.Text (Text, pack)
 import Data.Time.Clock (UTCTime)
