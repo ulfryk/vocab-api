@@ -7,11 +7,11 @@ import Data.Text (Text)
 import GHC.Generics (Generic)
 
 data CardUpdate = CardUpdate
-  { setASide :: Maybe Text,
-    setASideDetails :: Maybe Text,
+  { aSide :: Maybe Text,
+    aSideDetails :: Maybe Text,
     setBSide :: Maybe Text,
-    setArchived :: Maybe Bool,
-    setSuspended :: Maybe Bool
+    archived :: Maybe Bool,
+    suspended :: Maybe Bool
   }
   deriving (Generic, Show)
 

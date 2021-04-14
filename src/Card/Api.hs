@@ -2,11 +2,12 @@
 
 module Card.Api where
 
-import Card.Dto.CardInput
+import Card.Dto.CardInput (CardInput)
+import Card.Dto.CardUpdate (CardUpdate)
 import Card.Repository
 import Control.Monad.Trans (liftIO)
-import Web.Spock (SpockAction, SpockM, get, json, jsonBody', post, root, text)
-import Web.Spock.Config ()
+import Data.Text (pack)
+import Web.Spock (SpockAction, SpockM, get, json, jsonBody', var, post, patch, root, text, (<//>))
 
 type Api = SpockM () () () ()
 
@@ -25,3 +26,8 @@ app =
       input <- jsonBody' :: ApiAction CardInput
       card <- liftIO $ createCard input
       json card
+
+    patch ("cards" <//> var) $ \cid ->
+      do
+        p <- jsonBody' :: ApiAction CardUpdate
+        text . pack $ show p <> " by id " <> cid

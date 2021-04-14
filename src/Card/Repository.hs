@@ -3,7 +3,7 @@
 module Card.Repository where
 
 import Card.Dto.Card
-import Card.Dto.CardInput
+import qualified Card.Dto.CardInput as Inp
 import qualified Data.List as Lst (find)
 import Data.Text (Text, pack)
 import Data.Time.Clock (UTCTime)
@@ -57,11 +57,11 @@ getObjId = typed . valueAt "_id"
 asDocument :: Card -> Document
 asDocument card = ["aSide" =: aSide card, "bSide" =: bSide card]
 
-inputAsDocument :: CardInput -> Document
+inputAsDocument :: Inp.CardInput -> Document
 inputAsDocument card =
-  [ "aSide" =: initASide card,
-    "aSideDetails" =: initASideDetails card,
-    "bSide" =: initBSide card,
+  [ "aSide" =: Inp.aSide card,
+    "aSideDetails" =: Inp.aSideDetails card,
+    "bSide" =: Inp.bSide card,
     "suspended" =: False,
     "archived" =: False
   ]
@@ -91,20 +91,20 @@ fromDocument doc =
 toId :: Value -> Text
 toId = pack . show
 
-addCard :: CardInput -> Action IO Value
+addCard :: Inp.CardInput -> Action IO Value
 addCard card = insert "cards" $ inputAsDocument card
 
 allCards :: Action IO [Document]
 allCards = rest =<< find (select [] "cards")
 
-createCard :: CardInput -> IO Card
+createCard :: Inp.CardInput -> IO Card
 createCard input = do
   ident <- processRequest $ addCard input
   return
     Card
-      { aSide = initASide input,
-        aSideDetails = initASideDetails input,
-        bSide = initBSide input,
+      { aSide = Inp.aSide input,
+        aSideDetails = Inp.aSideDetails input,
+        bSide = Inp.bSide input,
         createdAt = timestamp $ typed ident,
         updatedAt = timestamp $ typed ident,
         suspended = False,
